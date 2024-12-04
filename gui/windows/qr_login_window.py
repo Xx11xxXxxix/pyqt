@@ -9,19 +9,24 @@ from io import BytesIO
 
 
 class QRLoginWindow(QWidget):
-    login_success = pyqtSignal(dict)  # 登录成功信号
+    login_success = pyqtSignal(dict)  # 登上的信号
     BASE_URL = "http://127.0.0.1:3000"
-    def __init__(self, db_manager,user_id):
+
+    def __init__(self, db_manager, user_id):
         super().__init__()
         self.db_manager = db_manager
         self.user_id = user_id
         self.unikey = None
         self.init_ui()
         self.get_qr_code()
-        # 初始化定时器
         self.check_timer = QTimer()
         self.check_timer.timeout.connect(self.check_scan_status)
-        self.check_timer.start(2000)  # 每2秒检查一次
+        self.check_timer.start(2000)
+
+    def closeEvent(self, event):
+        # 登上了哈几把一直伦
+        self.check_timer.stop()
+        super().closeEvent(event)
 
     def init_ui(self):
         self.setWindowTitle('扫码登录')
@@ -29,20 +34,16 @@ class QRLoginWindow(QWidget):
 
         layout = QVBoxLayout()
 
-        # 二维码标签
         self.qr_label = QLabel()
         self.qr_label.setFixedSize(280, 280)
         layout.addWidget(self.qr_label)
-
-        # 状态标签
-        self.status_label = QLabel('请使用网易云音乐APP扫码登录')
+        self.status_label = QLabel('扫吗')
         layout.addWidget(self.status_label)
 
         self.setLayout(layout)
 
     def get_qr_code(self):
         try:
-            # 获取unikey
             response = requests.get(f"{self.BASE_URL}/login/qr/key")
             self.db_manager.log_api_call(
                 user_id=self.user_id,
@@ -57,8 +58,6 @@ class QRLoginWindow(QWidget):
                 return
 
             self.unikey = response.json()["data"]["unikey"]
-
-            # 获取二维码图片
             response = requests.get(f"{self.BASE_URL}/login/qr/create",
                                     params={'key': self.unikey, 'qrimg': True})
             self.db_manager.log_api_call(
@@ -76,13 +75,12 @@ class QRLoginWindow(QWidget):
             qr_bytes = base64.b64decode(qrimg.split(",")[1])
             qr_image = BytesIO(qr_bytes)
 
-            # 显示二维码
             pixmap = QPixmap()
             pixmap.loadFromData(qr_bytes)
             self.qr_label.setPixmap(pixmap.scaled(280, 280))
 
         except Exception as e:
-            self.status_label.setText(f'错误: {str(e)}')
+            self.status_label.setText(f'错偶尔: {str(e)}')
             self.db_manager.log_api_call(
                 'qr_code_error',
                 {},
@@ -106,28 +104,22 @@ class QRLoginWindow(QWidget):
                 response_data=json.dumps(response.json()),
                 status_code=response.status_code
             )
-
-            if response.status_code != 200:
-                return
-
-            status = response.json()
-            code = status.get('code')
-
-            if code == 800:
-                self.status_label.setText('二维码已过期，请刷新')
+            data = response.json()
+            code = data.get('code')
+            if code == 803:
+                print(803)
+                cookie = data.get('cookie', '')
+                music_u = self.extract_music_u(cookie)
+                if music_u:
+                    self.db_manager.update_user_cookies(self.user_id, music_u)
+                    self.check_timer.stop()
+                    self.login_success.emit(data)
+                    self.close()
+            elif code == 800:
+                self.status_label.setText('guoqi')
                 self.get_qr_code()
-            elif code == 801:
-                self.status_label.setText('等待扫码')
-            elif code == 802:
-                self.status_label.setText('扫码成功，等待确认')
-            elif code == 803:
-                self.status_label.setText('登录成功！')
-                self.check_timer.stop()
-                self.login_success.emit(status)
-                self.close()
-
         except Exception as e:
-            self.status_label.setText(f'检查状态出错: {str(e)}')
+            self.status_label.setText(f'轮询报错了: {str(e)}')
             self.db_manager.log_api_call(
                 'status_check_error',
                 {'key': self.unikey},
@@ -135,3 +127,17 @@ class QRLoginWindow(QWidget):
                 500,
                 str(e)
             )
+
+    def extract_music_u(self, cookie_str: str) -> str:
+        try:
+            cookies = cookie_str.split(';')
+            for cookie in cookies:
+                if 'MUSIC_U=' in cookie:
+                    music_u = cookie.strip()
+                    print(f"有MUSIC_U: {music_u[:20]}...")
+                    return music_u
+            print("没有啊")
+            return ''
+        except Exception as e:
+            print(f"操了: {e}")
+            return ''

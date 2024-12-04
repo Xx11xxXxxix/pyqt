@@ -6,13 +6,17 @@ from PyQt6.QtWidgets import QApplication
 
 from database import db_manager
 from gui.windows.login_window import LoginWindow
+from gui.windows.main_window import MainWindow
 from gui.windows.qr_login_window import QRLoginWindow
 from database.db_manager import DatabaseManager
+
 
 class App:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.app.setStyle("Fusion")
+        self.current_cookies = None
+
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
         palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
@@ -35,28 +39,55 @@ class App:
         self.current_user_id = None
 
     def start(self):
-        self.login_window = LoginWindow()
-        self.login_window.login_success.connect(self.show_qr_login)
-        self.login_window.show()
-        return self.app.exec()
+        try:
+            self.login_window = LoginWindow()
+            self.login_window.login_success.connect(self.handle_login_success)
+            self.login_window.show()
+            return self.app.exec()
+        except Exception as e:
+            print(f"cuole:{str(e)}")
 
     def show_main_window(self):
-        self.login_window.close()
+        if self.login_window:
+            self.login_window.close()
+        if self.qr_window:
+            self.qr_window.close()
+        self.main_window = MainWindow(
+            self.db_manager,
+            self.current_user_id,
+            self.current_cookies,
+        )
+        self.main_window.show()
 
     def show_qr_login(self):
         try:
+            if self.current_cookies:
+                return self.show_main_window()
             self.qr_window = QRLoginWindow(self.db_manager, self.current_user_id)
-            self.qr_window.login_success.connect(self.handle_login_success)
+            self.qr_window.login_success.connect(self.handle_qr_success)
             self.qr_window.show()
         except Exception as e:
-            print(f"打开二维码窗口错误: {e}")
+            print(f"二维码窗口错了: {e}")
 
-    def handle_login_success(self, user_id):
-        self.current_user_id = user_id
+    def handle_login_success(self, user_id, cookies):
+        self.current_user_id = int(user_id)
+        self.current_cookies = cookies
         self.show_qr_login()
+
+    def handle_qr_success(self, status):
+        if isinstance(status, dict):
+            cookies = status.get('cookie')
+            if cookies:
+                print(f"爱还是得加: {cookies}")
+                self.current_cookies = cookies
+                if self.qr_window:
+                    self.qr_window.close()
+                self.show_main_window()
+
+
 if __name__ == '__main__':
     try:
         app = App()
         sys.exit(app.start())
     except Exception as e:
-        print(f"程序出错: {e}")
+        print(f"不知道操的: {e}")
