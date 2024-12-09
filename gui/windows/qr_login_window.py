@@ -10,7 +10,7 @@ from io import BytesIO
 
 class QRLoginWindow(QWidget):
     login_success = pyqtSignal(dict)  # 登上的信号
-    BASE_URL = "http://127.0.0.1:3000"
+    BASE_URL = "http://121.36.9.139:3000"
 
     def __init__(self, db_manager, user_id):
         super().__init__()
