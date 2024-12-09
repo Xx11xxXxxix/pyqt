@@ -1,5 +1,7 @@
 import os
 import subprocess
+import sys
+
 import requests
 import json
 
@@ -74,7 +76,8 @@ PersistentKeepalive = 25"""
         """安装WireGuard服务"""
         try:
             config_path_abs = os.path.abspath(self.config_path)
-            command = f'"{self.wireguard_exe}" /installtunnelservice "{config_path_abs}"'
+            # command = f'"{self.wireguard_exe}" /installtunnelservice "{config_path_abs}"'
+            command = f'powershell Start-Process -FilePath "{self.wireguard_exe}" -ArgumentList "/installtunnelservice","{config_path_abs}" -Verb RunAs -Wait'
             print(f"傻逼cmd: {command}")
             result = subprocess.run(
                 command,
@@ -95,9 +98,13 @@ PersistentKeepalive = 25"""
 
     def restart_service(self):
         try:
-            service_name = "WireGuardTunnel$mine"
-            subprocess.run(['net', 'stop', service_name], shell=True, check=False)
-            subprocess.run(['net', 'start', service_name], shell=True, check=True)
+            service_name = "WireGuardTunnel`$mine"
+            stop_command = f'powershell Start-Process -FilePath "sc.exe" -ArgumentList "stop","{service_name}" -Verb RunAs -Wait'
+            start_command = f'powershell Start-Process -FilePath "sc.exe" -ArgumentList "start","{service_name}" -Verb RunAs -Wait'
+            subprocess.run(stop_command, shell=True, check=False)
+            import time
+            time.sleep(2)
+            subprocess.run(start_command, shell=True, check=False)
             return True
         except Exception as e:
             print(f"服务重启错了: {str(e)}")
