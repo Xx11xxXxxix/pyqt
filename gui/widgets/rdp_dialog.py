@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel,
                              QLineEdit, QPushButton, QMessageBox, QHBoxLayout, QComboBox)
@@ -29,6 +30,11 @@ class RDPDialog(QDialog):
         refresh_btn = QPushButton('刷新IP列表')
         refresh_btn.clicked.connect(self.load_ip_list)
         ip_layout.addWidget(refresh_btn)
+
+        restart_btn = QPushButton('重启隧道')
+        restart_btn.clicked.connect(self.restart_wg_service)
+        ip_layout.addWidget(restart_btn)
+
         layout.addLayout(ip_layout)
 
         wg_layout = QHBoxLayout()
@@ -36,6 +42,9 @@ class RDPDialog(QDialog):
         setup_wg_btn.clicked.connect(self.setup_wireguard)
         wg_layout.addWidget(setup_wg_btn)
         layout.addLayout(wg_layout)
+
+
+
 
         btn_layout = QHBoxLayout()
         save_btn = QPushButton('先保存再连')
@@ -73,7 +82,19 @@ class RDPDialog(QDialog):
 
             if current_text:
                 self.ip_combo.setCurrentText(current_text)
-
+            config_path = os.path.join(self.wg_service.wg_dir, "mine.conf")
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config_lines = f.readlines()
+                for i, line in enumerate(config_lines):
+                    if line.strip().startswith('AllowedIPs'):
+                        base_ips = "39.156.66.10/32, 39.105.172.46/32, 39.105.122.46/32, 192.168.1.103/32"
+                        wg_ips = [f"{ip}/32" for ip in ips]
+                        all_ips = f"{base_ips},{','.join(wg_ips)}"
+                        config_lines[i] = f"AllowedIPs = {all_ips}\n"
+                        break
+                with open(config_path, 'w') as f:
+                    f.writelines(config_lines)
         except Exception as e:
             QMessageBox.warning(self, '！！', f'IP列表错了看服务器防火墙去你ip地址多少: {str(e)}')
 
@@ -90,17 +111,24 @@ class RDPDialog(QDialog):
 
     def setup_wireguard(self):
         try:
-            QMessageBox.information(self, '提示', '开始配置WireGuard...')
+            QMessageBox.information(self, '....', '等着配置WireGuard...')
             public_key = self.wg_service.generate_keys()
             server_config = self.wg_service.get_server_config(public_key)
             if not server_config.get('success'):
-                raise Exception(server_config.get('error', '服务器配置失败'))
+                raise Exception(server_config.get('error', '服务器出错'))
             self.wg_service.create_config_file(
                 server_config['ip'],
                 server_config['server_public_key']
             )
             self.wg_service.install_service()
-            QMessageBox.information(self, '成功', f'WireGuard配置完成\nIP: {server_config["ip"]}')
+            QMessageBox.information(self, 'DONE', f'隧道配置好了\nIP: {server_config["ip"]}')
             self.load_ip_list()
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'WireGuard配置失败: {str(e)}')
+            QMessageBox.critical(self, '!!!', f'隧道配置坏了: {str(e)}')
+
+    def restart_wg_service(self):
+        try:
+            self.wg_service.restart_service()
+            QMessageBox.information(self, 'DONE', '隧道重启了')
+        except Exception as e:
+            QMessageBox.critical(self, '！！！', f'隧道没重启: {str(e)}')

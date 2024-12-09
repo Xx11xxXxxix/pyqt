@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
 
         try:
             self.is_requesting = True
-            self.status_label.setText('等着...')
+            self.status_label.setText('...')
             self.recommend_api.get_daily_songs()
         except Exception as e:
             print(f"RItuicuo: {str(e)}")

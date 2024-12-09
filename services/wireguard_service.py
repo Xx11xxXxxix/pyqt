@@ -92,3 +92,13 @@ PersistentKeepalive = 25"""
         except Exception as e:
             print(f"服务器又炸了: {str(e)}")
             raise
+
+    def restart_service(self):
+        try:
+            service_name = "WireGuardTunnel$mine"
+            subprocess.run(['net', 'stop', service_name], shell=True, check=False)
+            subprocess.run(['net', 'start', service_name], shell=True, check=True)
+            return True
+        except Exception as e:
+            print(f"服务重启错了: {str(e)}")
+            raise
