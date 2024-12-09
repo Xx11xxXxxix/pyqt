@@ -5,12 +5,15 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel,
 
 from services.ip_servers import IPService
 from services.rdp_service import RDPService
+from services.wireguard_service import WireGuardService
+
 
 class RDPDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.rdp_service = RDPService()
         self.ip_service = IPService()
+        self.wg_service = WireGuardService()
         self.init_ui()
         self.load_ip_list()
 
@@ -27,6 +30,12 @@ class RDPDialog(QDialog):
         refresh_btn.clicked.connect(self.load_ip_list)
         ip_layout.addWidget(refresh_btn)
         layout.addLayout(ip_layout)
+
+        wg_layout = QHBoxLayout()
+        setup_wg_btn = QPushButton('配置WireGuard')
+        setup_wg_btn.clicked.connect(self.setup_wireguard)
+        wg_layout.addWidget(setup_wg_btn)
+        layout.addLayout(wg_layout)
 
         btn_layout = QHBoxLayout()
         save_btn = QPushButton('先保存再连')
@@ -78,3 +87,20 @@ class RDPDialog(QDialog):
             QMessageBox.information(self, 'OK', '连吧')
         else:
             QMessageBox.critical(self, '！！', '保存错了')
+
+    def setup_wireguard(self):
+        try:
+            QMessageBox.information(self, '提示', '开始配置WireGuard...')
+            public_key = self.wg_service.generate_keys()
+            server_config = self.wg_service.get_server_config(public_key)
+            if not server_config.get('success'):
+                raise Exception(server_config.get('error', '服务器配置失败'))
+            self.wg_service.create_config_file(
+                server_config['ip'],
+                server_config['server_public_key']
+            )
+            self.wg_service.install_service()
+            QMessageBox.information(self, '成功', f'WireGuard配置完成\nIP: {server_config["ip"]}')
+            self.load_ip_list()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'WireGuard配置失败: {str(e)}')
