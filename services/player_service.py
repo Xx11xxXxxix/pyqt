@@ -3,9 +3,17 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 
 class PlayerService(QObject):
+    _instance = None
     playback_state_changed = pyqtSignal(bool)  # 播放状态信号
     position_changed = pyqtSignal(int)  # 播放位置的信号这个牛逼
     duration_changed = pyqtSignal(int)
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls.instance=cls()
+        return cls.instance
+
 
     def __init__(self):
         super().__init__()
