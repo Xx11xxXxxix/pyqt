@@ -38,10 +38,12 @@ class MainWindow(QMainWindow):
         self.player_controls = PlayerControls()
         self.song_list = QListWidget()
         self.status_label = QLabel('SENDIT!!!!!')
+
         self.get_recommend_btn = QPushButton('不主动就是不喜欢了[多多捂脸]')
         self.get_recommend_btn.clicked.connect(self.get_daily_songs)
-
         layout.addWidget(self.get_recommend_btn)
+
+
 
         layout.addWidget(self.song_list)
         layout.addWidget(self.player_controls)

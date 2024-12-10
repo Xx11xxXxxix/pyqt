@@ -4,9 +4,11 @@ import subprocess
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel,
                              QLineEdit, QPushButton, QMessageBox, QHBoxLayout, QComboBox)
 
+from gui.widgets.ip_manager_dialog import IPManagerDialog
 from services.ip_servers import IPService
 from services.rdp_service import RDPService
 from services.wireguard_service import WireGuardService
+from utils.widgets.toast import Toast
 
 
 class RDPDialog(QDialog):
@@ -45,16 +47,22 @@ class RDPDialog(QDialog):
 
 
 
-
         btn_layout = QHBoxLayout()
         save_btn = QPushButton('先保存再连')
         launch_btn = QPushButton('SENDIT!!!!!!!')
+        show_ip_manager_btn=QPushButton('加ip')
+        fetch_save_ip_list_btn=QPushButton('同步服务器ip')
+
 
         save_btn.clicked.connect(self.save_rdp_config)
         launch_btn.clicked.connect(self.launch_rdp)
+        show_ip_manager_btn.clicked.connect(self.show_ip_manager)
+        fetch_save_ip_list_btn.clicked.connect(self.on_fetch_save_ip_list_clicked)
 
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(launch_btn)
+        btn_layout.addWidget(show_ip_manager_btn)
+        btn_layout.addWidget(fetch_save_ip_list_btn)
         layout.addLayout(btn_layout)
 
         self.setLayout(layout)
@@ -75,6 +83,9 @@ class RDPDialog(QDialog):
     def load_ip_list(self):
         try:
             ips = self.ip_service.get_active_ips()
+
+            if not isinstance(ips, (list, tuple)):
+                raise ValueError(f"获取到的IP不是列表格式: {ips}")
             current_text = self.ip_combo.currentText()
 
             self.ip_combo.clear()
@@ -82,6 +93,12 @@ class RDPDialog(QDialog):
 
             if current_text:
                 self.ip_combo.setCurrentText(current_text)
+
+            # self.fetch_save_ip_list(ips)
+        except Exception as e:
+            QMessageBox.warning(self, '！！', f'IP列表错了看服务器防火墙去你ip地址多少: {str(e)}')
+    def fetch_save_ip_list(self,ips):
+        try:
             config_path = os.path.join(self.wg_service.wg_dir, "mine.conf")
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
@@ -97,6 +114,17 @@ class RDPDialog(QDialog):
                     f.writelines(config_lines)
         except Exception as e:
             QMessageBox.warning(self, '！！', f'IP列表错了看服务器防火墙去你ip地址多少: {str(e)}')
+
+    def on_fetch_save_ip_list_clicked(self):
+        try:
+            ips = self.ip_service.get_active_ips()
+            if isinstance(ips, list) and ips:
+                self.fetch_save_ip_list(ips)
+                Toast.show_message(self, "DONE!")
+            else:
+                QMessageBox.warning(self, 'TIP!', 'GET_LIST:!!')
+        except Exception as e:
+            QMessageBox.warning(self, 'NO!', f'GET_LIST_WRONG: {str(e)}')
 
     def save_rdp_config(self):
         ip = self.ip_combo.currentText().strip()
@@ -132,3 +160,13 @@ class RDPDialog(QDialog):
             QMessageBox.information(self, 'DONE', '隧道重启了')
         except Exception as e:
             QMessageBox.critical(self, '！！！', f'隧道没重启: {str(e)}')
+
+
+
+    def show_ip_manager(self):
+        try:
+            config_path = os.path.join(self.wg_service.wg_dir, "mine.conf")
+            dialog = IPManagerDialog(config_path, self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, 'NO!', f'IP WINDOW WRONG: {str(e)}')
