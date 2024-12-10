@@ -1,12 +1,9 @@
 import subprocess
-
-import requests
-import json
-
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QListWidget, QLabel, QPushButton, QMessageBox, \
-    QHBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QWidget,  QListWidget, QLabel, QPushButton, QMessageBox, \
+  QGridLayout
 
 from gui.widgets.rdp_dialog import RDPDialog
+from gui.windows.search_window import SearchWindow
 from services.recommend_songs import RecommendAPI
 from gui.widgets.player_controls import PlayerControls
 
@@ -26,36 +23,40 @@ class MainWindow(QMainWindow):
         self.recommend_api.song_url_received.connect(self.on_song_url_received)
         self.is_requesting = False
 
+        self.search_window.song_clicked.connect(self.play_song_by_id)
+
     def init_ui(self):
         self.setWindowTitle('已闻君，诸事安康。 遇佳人，不久婚嫁。 已闻君，得偿所想。 料得是，卿识君望')
         self.setGeometry(100, 100, 800, 600)
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+
+        grid_layout=QGridLayout(central_widget)
+
         self.remote_control_btn = QPushButton('点我开远程')
-        self.remote_control_btn.clicked.connect(self.enable_remote_control)
-        layout.addWidget(self.remote_control_btn)
-        self.player_controls = PlayerControls()
-        self.song_list = QListWidget()
-        self.status_label = QLabel('SENDIT!!!!!')
-
         self.get_recommend_btn = QPushButton('不主动就是不喜欢了[多多捂脸]')
-        self.get_recommend_btn.clicked.connect(self.get_daily_songs)
-        layout.addWidget(self.get_recommend_btn)
-
-
-
-        layout.addWidget(self.song_list)
-        layout.addWidget(self.player_controls)
-        layout.addWidget(self.status_label)
-        rdp_layout = QHBoxLayout()
         self.rdp_btn = QPushButton('点我控人')
-        self.rdp_btn.clicked.connect(self.show_rdp_dialog)
-        layout.addWidget(self.rdp_btn)
-        layout.addLayout(rdp_layout)
+        self.search_window=SearchWindow(self.cookies)
+        self.song_list=QListWidget()
 
-        # self.get_recommend_btn.clicked.connect(self.get_daily_songs)
+        grid_layout.addWidget(self.remote_control_btn,0,0)
+        grid_layout.addWidget(self.get_recommend_btn,1,0)
+        grid_layout.addWidget(self.rdp_btn,2,0)
+        grid_layout.addWidget(self.search_window,0,1)
+        grid_layout.addWidget(self.song_list,1,1,2,2)
+
+
+        self.remote_control_btn.clicked.connect(self.enable_remote_control)
+        self.get_recommend_btn.clicked.connect(self.get_daily_songs)
+        self.rdp_btn.clicked.connect(self.show_rdp_dialog)
         self.song_list.itemClicked.connect(self.on_song_clicked)
+
+
+        self.player_controls = PlayerControls()
+        self.status_label = QLabel('SENDIT!!!!!')
+        grid_layout.addWidget(self.player_controls,3,0,1,3)
+        grid_layout.addWidget(self.status_label,4,0,1,3)
 
     def check_remote_control_status(self):
         try:
@@ -127,3 +128,12 @@ class MainWindow(QMainWindow):
     def show_rdp_dialog(self):
         dialog = RDPDialog(self)
         dialog.exec()
+
+    def play_song_by_id(self,song_id):
+        try:
+            self.recommend_api.get_songs_url(song_id)
+            self.status_label.setText(f'wATTING........id:{song_id}')
+        except Exception as e:
+            self.status_label.setText('WRONG_PLAY_SONG')
+
+

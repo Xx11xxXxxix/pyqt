@@ -47,13 +47,11 @@ class RecommendAPI(QObject):
             print("zhaocookiequ")
             return
 
-        # 修改取消之前请求的逻辑
         try:
             if self.current_reply:
                 if self.current_reply.isRunning():
                     print("Aborting previous request")
                     self.current_reply.abort()
-                # 确保 current_reply 存在时才调用 deleteLater
                 self.current_reply.deleteLater()
                 self.current_reply = None
         except Exception as e:
