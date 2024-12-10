@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QMainWindow, QWidget,  QListWidget, QLabel, QPushBut
   QGridLayout
 
 from gui.widgets.rdp_dialog import RDPDialog
+from gui.windows.recommend_window import RecommendWindow
 from gui.windows.search_window import SearchWindow
 from services.recommend_songs import RecommendAPI
 from gui.widgets.player_controls import PlayerControls
@@ -39,24 +40,29 @@ class MainWindow(QMainWindow):
         self.rdp_btn = QPushButton('点我控人')
         self.search_window=SearchWindow(self.cookies)
         self.song_list=QListWidget()
+        self.recommend_resource_btn = QPushButton('推荐歌单')
+
 
         grid_layout.addWidget(self.remote_control_btn,0,0)
         grid_layout.addWidget(self.get_recommend_btn,1,0)
         grid_layout.addWidget(self.rdp_btn,2,0)
         grid_layout.addWidget(self.search_window,0,1)
         grid_layout.addWidget(self.song_list,1,1,2,2)
+        grid_layout.addWidget(self.recommend_resource_btn,1,0,3,0)
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
         self.get_recommend_btn.clicked.connect(self.get_daily_songs)
         self.rdp_btn.clicked.connect(self.show_rdp_dialog)
         self.song_list.itemClicked.connect(self.on_song_clicked)
+        self.recommend_resource_btn.clicked.connect(self.open_recommend_resource_window)
 
 
         self.player_controls = PlayerControls()
         self.status_label = QLabel('SENDIT!!!!!')
         grid_layout.addWidget(self.player_controls,3,0,1,3)
         grid_layout.addWidget(self.status_label,4,0,1,3)
+
 
     def check_remote_control_status(self):
         try:
@@ -135,5 +141,19 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f'wATTING........id:{song_id}')
         except Exception as e:
             self.status_label.setText('WRONG_PLAY_SONG')
+
+    def open_recommend_resource_window(self):
+        self.recommend_resource_window=RecommendWindow(self.cookies)
+        self.recommend_resource_window.show()
+    def on_song_clicked_from_search(self, song_id):
+        try:
+            self.recommend_api.get_songs_url(song_id)
+            self.status_label.setText(f'WAITING......ID:{song_id}')
+        except Exception as e:
+            self.status_label.setText('播放歌曲时出错')
+            print(f"播放歌曲出错: {e}")
+
+
+
 
 

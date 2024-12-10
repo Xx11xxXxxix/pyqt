@@ -162,7 +162,7 @@ class SearchWindow(QWidget):
                 song_id = int(id_item.text())
                 self.song_clicked.emit(song_id)
             except ValueError:
-                print('Invalid Song ID')
+                print('WRONG Song ID')
 
     def update_results_list(self, results):
         self.result_table.clearContents()

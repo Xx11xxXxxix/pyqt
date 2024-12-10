@@ -28,3 +28,28 @@ class MusicService:
         response=requests.get(url,params=params)
         response.raise_for_status()
         return response.json()
+
+    def get_recommend_resource(self, cookies):
+        url = f"{self.BASE_URL}/recommend/resource"
+        params = {
+            'Cookie': cookies
+        }
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def get_playlist_tracks(self, playlist_id, limit=None, offset=0, cookies=None):
+        url = f"{self.BASE_URL}/playlist/track/all"
+        params = {
+            'id': playlist_id,
+            'offset': offset
+        }
+        if limit is not None:
+            params['limit'] = limit
+
+        headers = {}
+        if cookies:
+            headers['Cookie'] = cookies
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        return response.json()
