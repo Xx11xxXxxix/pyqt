@@ -2,8 +2,11 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLineEdit, QTableWidget,
                              QTableWidgetItem, QMessageBox, QPushButton)
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import QTimer, pyqtSignal, Qt
 
+from gui.widgets.first_listen_dialog import FirstListenDialog
+from gui.widgets.song_context_menu import SongContextMenu
+from services.first_listen_service import  FirstListenService
 from services.music_service import MusicService
 @dataclass
 class Artist:
@@ -105,6 +108,7 @@ class SearchWindow(QWidget):
         super().__init__()
         self.cookies=cookies
         self.music_service=MusicService()
+        self.first_listen_service = FirstListenService()
         self.song_ids={}
         self.init_ui()
 
@@ -128,9 +132,13 @@ class SearchWindow(QWidget):
         self.result_table.setColumnCount(len(self.search_headers))
         self.result_table.setHorizontalHeaderLabels(self.search_headers)
         self.recommend_songs_daily_btn = QPushButton('看你的破日推')
+        self.result_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+
+
         self.recommend_songs_daily_btn.clicked.connect(self.recommend_songs_daily)
         self.result_table.cellClicked.connect(self.on_result_table_clicked)
         self.search_input.textChanged.connect(self.on_search_text_changed)
+        self.result_table.customContextMenuRequested.connect(self.show_context_menu)
 
 
         layout.addWidget(self.recommend_songs_daily_btn)
@@ -179,6 +187,52 @@ class SearchWindow(QWidget):
                 QMessageBox.warning(self,"NO!","WRONG_IN_recommend_songs_daily")
         except Exception as e:
             QMessageBox.critical(self,'NO!',f'WRONG_IN_recommend_songs_daily:{e}')
+    def show_context_menu(self, position):
+        row = self.result_table.rowAt(position.y())
+        if row >= 0:
+            id_item = self.result_table.item(row, 1)
+            if id_item:
+                try:
+                    song_id = int(id_item.text())
+                    menu = SongContextMenu(song_id, self)
+                    menu.show_first_listen_info.connect(self.handle_first_listen_info)
+                    menu.exec(self.result_table.viewport().mapToGlobal(position))
+                except ValueError:
+                    pass
+
+    def handle_first_listen_info(self, song_id):
+        try:
+            result = self.first_listen_service.get_first_listen_info(song_id, self.cookies)
+            full_data = result.get('data', {})
+            message = result.get('message', '')
+            print(result)
+            if full_data:
+                dialog = FirstListenDialog(full_data, message, self)
+                dialog.exec()
+            else:
+                QMessageBox.information(self, "提示", "没有相关的听歌记录")
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"获取听歌信息失败: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def update_results_list(self, results):
         self.result_table.clearContents()
