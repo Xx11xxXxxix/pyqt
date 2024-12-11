@@ -138,6 +138,8 @@ class MainWindow(QMainWindow):
 
     def update_search_results(self, songs):
         self.search_window.result_table.clearContents()
+        self.search_window.result_table.setColumnCount(len(self.search_window.search_headers))
+        self.search_window.result_table.setHorizontalHeaderLabels(self.search_window.search_headers)
         self.search_window.result_table.setRowCount(len(songs))
         for row, song in enumerate(songs):
             self.search_window.result_table.setItem(row, 0, QTableWidgetItem(song['name']))
