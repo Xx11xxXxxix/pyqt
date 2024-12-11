@@ -136,19 +136,26 @@ class MainWindow(QMainWindow):
         self.recommend_resource_window.track_songs.connect(self.update_search_results)
         self.recommend_resource_window.show()
 
-    def update_search_results(self,songs):
+    def update_search_results(self, songs):
         self.search_window.result_table.clearContents()
         self.search_window.result_table.setRowCount(len(songs))
-        for row,song in enumerate(songs):
-            self.search_window.result_table.setItem(row,0,QTableWidgetItem(song['name']))
-            self.search_window.result_table.setItem(row,1,QTableWidgetItem(str(song['id'])))
-            self.search_window.result_table.setItem(row,2,QTableWidgetItem(song['artists']))
-            self.search_window.result_table.setItem(row,3,QTableWidgetItem(song['album']))
-            duration_ms=song['dt']
-            minutes=duration_ms // (1000*60)
-            seconds=(duration_ms // 1000)% 60
-            self.search_window.result_table.setItem(row,5,QTableWidgetItem(f"{minutes:02d}:{seconds:02d}"))
-
+        for row, song in enumerate(songs):
+            self.search_window.result_table.setItem(row, 0, QTableWidgetItem(song['name']))
+            self.search_window.result_table.setItem(row, 1, QTableWidgetItem(str(song['id'])))
+            self.search_window.result_table.setItem(row, 2, QTableWidgetItem(song['artists']))
+            self.search_window.result_table.setItem(row, 3, QTableWidgetItem(song['album']))
+            self.search_window.result_table.setItem(row, 4, QTableWidgetItem(song['album_picUrl']))
+            self.search_window.result_table.setItem(row, 5, QTableWidgetItem(song['dt']))
+            self.search_window.result_table.setItem(row, 6, QTableWidgetItem(song['fee_str']))
+            self.search_window.result_table.setItem(row, 7, QTableWidgetItem(song['has_sq']))
+            self.search_window.result_table.setItem(row, 8, QTableWidgetItem(song['has_hq']))
+            self.search_window.result_table.setItem(row, 9, QTableWidgetItem(song['has_hr']))
+            self.search_window.result_table.setItem(row, 10, QTableWidgetItem(song['has_mv']))
+            self.search_window.result_table.setItem(row, 11, QTableWidgetItem(str(song['pop'])))
+            self.search_window.result_table.setItem(row, 12, QTableWidgetItem(song['publishTime']))
+            self.search_window.result_table.setItem(row, 13, QTableWidgetItem(str(song['copyright'])))
+            self.search_window.result_table.setItem(row, 14, QTableWidgetItem(str(song['version'])))
+        self.search_window.result_table.resizeColumnsToContents()
 
 
 

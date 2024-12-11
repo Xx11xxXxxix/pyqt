@@ -165,22 +165,54 @@ class RecommendWindow(QWidget):
             QMessageBox.critical(self,'NO!',f'WRONG_RECOMMEND_track_id: {e}')
 
     def process_playlist_tracks(self, results):
+        print(results)
         if results.get('code') == 200 and 'songs' in results:
             tracks = results['songs']
             songs = []
             for track in tracks:
+                duration_ms = track.get('dt', 0)
+                minutes = duration_ms // 60000
+                seconds = (duration_ms % 60000) // 1000
+                duration_str = f"{minutes:02d}:{seconds:02d}"
+                fee = track.get('fee', 0)
+                if fee == 1:
+                    fee_str = "ONLY_VIP"
+                elif fee == 0:
+                    fee_str = "FREE"
+                else:
+                    fee_str = "PAID"
+                has_sq = 'YEAH' if track.get('sq') else 'NO'
+                has_hq = 'YEAH' if track.get('h') else 'NO'
+                has_hr = 'YEAH' if track.get('hr') else 'NO'
+                has_mv = 'YEAH' if track.get('mv') else 'NO'
+                publish_timestamp = track.get('publishTime', 0)
+                try:
+                    from datetime import datetime
+                    publish_time = datetime.fromtimestamp(publish_timestamp / 1000).strftime('%Y-%m-%d')
+                except:
+                    publish_time = str(publish_timestamp)
                 song = {
                     'name': track.get('name', ''),
                     'id': track.get('id', 0),
                     'artists': '/'.join([artist.get('name', '') for artist in track.get('ar', [])]),
                     'album': track.get('al', {}).get('name', ''),
-                    'dt': track.get('dt', 0)
+                    'album_picUrl': track.get('al', {}).get('picUrl', ''),
+                    'dt': duration_str,
+                    'fee_str': fee_str,
+                    'has_sq': has_sq,
+                    'has_hq': has_hq,
+                    'has_hr': has_hr,
+                    'has_mv': has_mv,
+                    'pop': track.get('pop', 0),
+                    'publishTime': publish_time,
+                    'copyright': track.get('copyright', 0),
+                    'version': track.get('version', 0)
                 }
                 songs.append(song)
             self.track_songs.emit(songs)
         else:
             QMessageBox.warning(self, 'NO!', 'WRONG_RECOMMEND_track_SONGS。')
-    
+
 
     def update_results_list(self, results):
         print(results)
