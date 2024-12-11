@@ -112,8 +112,10 @@ class RecommendWindow(QWidget):
         self.setGeometry(150, 150, 800, 600)
 
         layout = QVBoxLayout()
-
+        
         self.recommend_btn = QPushButton('你的破歌单')
+
+
         self.recommend_btn.clicked.connect(self.get_recommend_resource)
 
         self.result_table = QTableWidget()
@@ -122,9 +124,6 @@ class RecommendWindow(QWidget):
         self.result_table.setHorizontalHeaderLabels(headers)
         self.result_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)  # 不让编辑
         self.result_table.cellClicked.connect(self.on_result_table_clicked)
-
-
-
 
         layout.addWidget(self.recommend_btn)
         layout.addWidget(self.result_table)
@@ -181,19 +180,16 @@ class RecommendWindow(QWidget):
             self.track_songs.emit(songs)
         else:
             QMessageBox.warning(self, 'NO!', 'WRONG_RECOMMEND_track_SONGS。')
-
+    
 
     def update_results_list(self, results):
-        print(results)  # 确认实际返回的数据结构
+        print(results)
         self.result_table.clearContents()
-
-        # 修改条件判断，'recommend' 位于顶层
         if results.get('code') == 200 and 'recommend' in results:
             playlists_data = results['recommend']
             self.result_table.setRowCount(len(playlists_data))
 
             for row, playlist_data in enumerate(playlists_data):
-                # 提取播放列表相关信息
                 name = playlist_data.get('name', '')
                 id_ = playlist_data.get('id', 0)
                 creator = playlist_data.get('creator', {})
@@ -203,7 +199,6 @@ class RecommendWindow(QWidget):
                 playcount = playlist_data.get('playcount', 0)
                 copywriter = playlist_data.get('copywriter', '')
 
-                # 填充表格
                 self.result_table.setItem(row, 0, QTableWidgetItem(name))
                 self.result_table.setItem(row, 1, QTableWidgetItem(str(id_)))
                 self.result_table.setItem(row, 2, QTableWidgetItem(creator_nickname))
@@ -214,7 +209,7 @@ class RecommendWindow(QWidget):
 
             self.result_table.resizeColumnsToContents()
         else:
-            # 如果没有推荐数据，显示“NO”
+
             self.result_table.setRowCount(0)
             self.result_table.setColumnCount(1)
             self.result_table.setHorizontalHeaderLabels(["信息"])

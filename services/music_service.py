@@ -53,3 +53,12 @@ class MusicService:
         response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
         return response.json()
+
+    def get_recommend_songs_daily(self,cookies):
+        url=f"{self.BASE_URL}/recommend/songs"
+        params={
+            'cookie':cookies
+        }
+        response=requests.get(url,params=params)
+        response.raise_for_status()
+        return response.json()
