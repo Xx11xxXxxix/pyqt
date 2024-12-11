@@ -1,8 +1,32 @@
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QComboBox, QTableWidget, QTableWidgetItem, QLabel)
 from services.comment_service import CommentService
 
+class CommentLoaderThread(QThread):
+    comments_loaded = pyqtSignal(dict,int)
+    error_occurred = pyqtSignal(str)
 
+    def __init__(self, comment_service, resource_id, page_no, sort_type, cursor=None):
+        super().__init__()
+        self.comment_service = comment_service
+        self.resource_id = resource_id
+        self.page_no = page_no
+        self.sort_type = sort_type
+        self.cursor = cursor
+
+    def run(self):
+        try:
+            response = self.comment_service.get_comments(
+                id=self.resource_id,
+                type=0,
+                page_no=self.page_no,
+                sort_type=self.sort_type,
+                cursor=self.cursor
+            )
+            self.comments_loaded.emit(response,self.page_no)
+        except Exception as e:
+            self.error_occurred.emit(str(e))
 class CommentWidget(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -12,7 +36,11 @@ class CommentWidget(QWidget):
         self.cursor_history = []
         self.resource_type = 0
         self.resource_id = None
+        self.comments_cache={}
         self.init_ui()
+        self.loader_thread = None
+        self.load_initial_comments()
+
 
     def init_ui(self):
         layout=QVBoxLayout(self)
@@ -46,6 +74,18 @@ class CommentWidget(QWidget):
 
         layout.addLayout(controls_layout)
         layout.addWidget(self.comment_table)
+
+    def load_initial_comments(self):
+        self.loader_thread=CommentLoaderThread(
+            self.comment_service,
+            self.resource_id,
+            self.current_page,
+            self.sort_combo.currentIndex()+1,
+            cursor=None
+        )
+        self.loader_thread.comments_loaded.connect(self.handle_comments_loaded)
+        self.loader_thread.error_occurred.connect(self.handle_load_error)
+        self.loader_thread.start()
 
 
     def load_comments(self):
@@ -105,16 +145,51 @@ class CommentWidget(QWidget):
         self.current_page = 1
         self.last_cursor = None
         self.cursor_history = []
-        self.load_comments()
+        self.comments_cache={}
+        self.load_initial_comments()
 
     def load_next_page(self):
-        self.current_page += 1
-        self.load_comments()
+        self.next_btn.setEnabled(False)
+        sort_type=self.sort_combo.currentIndex()+1
+        cursor=None
+        if sort_type==3 and self.current_page>0:
+            if len(self.cursor_history)>=self.current_page:
+                cursor=self.cursor_history[self.current_page-1]
+            else:
+                cursor=self.last_cursor
+
+        self.loader_thread=CommentLoaderThread(
+            self.comment_service,
+            self.resource_id,
+            self.current_page+1,
+            sort_type,
+            cursor
+        )
+        self.loader_thread.comments_loaded.connect(self.handle_comments_loaded)
+        self.loader_thread.error_occurred.connect(self.handle_load_error)
+        self.loader_thread.finished.connect(lambda:self.next_btn.setEnabled(True))
+        self.loader_thread.start()
 
     def load_prev_page(self):
         if self.current_page > 1:
-            self.current_page -= 1
-            self.load_comments()
+            prev_page=self.current_page-1
+            if prev_page in self.comments_cache:
+                self.current_page=prev_page
+                self.update_comments_table(self.comments_cache[prev_page])
+                self.page_label.setText(f'{self.current_page}')
+                self.prev_btn.setEnabled(self.current_page>1)
+            else:
+                self.current_page=prev_page
+                self.loader_thread=CommentLoaderThread(
+                    self.comment_service,
+                    self.resource_id,
+                    self.current_page,
+                    self.sort_combo.currentIndex()+1,
+                    cursor=self.cursor_history[self.current_page-1]if self.sort_combo.currentIndex()+1== 3 else None
+                )
+                self.loader_thread.comments_loaded.connect(self.handle_comments_loaded)
+                self.loader_thread.error_occurred.connect(self.handle_load_error)
+                self.loader_thread.start()
 
     def update_for_song(self,song_id):
         self.resource_id=song_id
@@ -122,4 +197,35 @@ class CommentWidget(QWidget):
         self.current_page=1
         self.last_cursor=None
         self.cursor_history=[]
-        self.load_comments()
+        self.comments_cache={}
+        self.load_initial_comments()
+
+    def handle_comments_loaded(self,response,page_no):
+        if response.get('code') == 200:
+            comments=response.get('data',{}).get('comments',[])
+            if comments:
+                self.comments_cache[page_no]=comments
+                self.update_comments_table(comments)
+                sort_type=self.sort_combo.currentIndex()+1
+                if sort_type==3:
+                    new_cursor=comments[-1].get('time')
+                    if page_no>len(self.cursor_history):
+                        self.cursor_history.append(new_cursor)
+                    else:
+                        self.cursor_history[page_no-1]=new_cursor
+                    self.last_cursor=new_cursor
+                self.current_page=page_no
+                self.page_label.setText(f'{self.current_page}')
+                self.prev_btn.setEnabled(self.current_page>1)
+            else:
+                print(f'{page_no}meipinglun')
+                if page_no>1:
+                    self.current_page-=1
+        else:
+            print(f"NO!!!: {response.get('message', 'UNKNOW')}")
+        self.next_btn.setEnabled(True)
+
+
+    def handle_load_error(self,error_msg):
+        print(f'COMMENT LOAD ERROR: {error_msg}')
+        self.next_btn.setEnabled(True)
