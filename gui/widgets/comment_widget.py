@@ -9,6 +9,7 @@ class CommentWidget(QWidget):
         self.comment_service = CommentService()
         self.current_page = 1
         self.last_cursor = None
+        self.cursor_history = []
         self.resource_type = 0
         self.resource_id = None
         self.init_ui()
@@ -23,9 +24,15 @@ class CommentWidget(QWidget):
         self.sort_combo.addItems(['系统排的吧', '谁的赞多', '谁写的早'])
         self.sort_combo.setCurrentIndex(2)
 
+        self.sort_combo.currentIndexChanged.connect(self.on_sort_changed)
+
+
         self.prev_btn = QPushButton('PREV')
         self.page_label = QLabel('1')
         self.next_btn = QPushButton('NEXT')
+
+        self.next_btn.clicked.connect(self.load_next_page)
+        self.prev_btn.clicked.connect(self.load_prev_page)
 
         controls_layout.addWidget(self.sort_combo)
         controls_layout.addStretch()
@@ -45,6 +52,11 @@ class CommentWidget(QWidget):
 
         try:
             sort_type = self.sort_combo.currentIndex() + 1
+            if sort_type==3 and self.current_page > 1:
+                cursor=self.cursor_history[self.current_page-2]
+            else:
+                cursor=None
+
             response = self.comment_service.get_comments(
                 id=self.resource_id,
                 type=self.resource_type,
@@ -58,6 +70,11 @@ class CommentWidget(QWidget):
                 self.update_comments_table(comments)
 
                 if comments and sort_type == 3:
+                    new_cursor=comments[-1].get('time')
+                    if self.current_page>len(self.cursor_history):
+                        self.cursor_history.append(new_cursor)
+                    else:
+                        self.cursor_history[self.current_page-1]=new_cursor
                     self.last_cursor = comments[-1].get('time')
 
             self.page_label.setText(f'第{self.current_page}页')
@@ -87,6 +104,7 @@ class CommentWidget(QWidget):
     def on_sort_changed(self):
         self.current_page = 1
         self.last_cursor = None
+        self.cursor_history = []
         self.load_comments()
 
     def load_next_page(self):
@@ -96,7 +114,6 @@ class CommentWidget(QWidget):
     def load_prev_page(self):
         if self.current_page > 1:
             self.current_page -= 1
-            self.last_cursor = None
             self.load_comments()
 
     def update_for_song(self,song_id):
@@ -104,4 +121,5 @@ class CommentWidget(QWidget):
         self.resource_type = 0
         self.current_page=1
         self.last_cursor=None
+        self.cursor_history=[]
         self.load_comments()
