@@ -25,7 +25,7 @@ class FirstListenDialog(QDialog):
                 self.setAutoFillBackground(True)
             except:
                 pass
-##12
+##123
         title_label = QLabel(f"title: {data.get('title')}")
         message_label = QLabel(f"message: {message}")
 
