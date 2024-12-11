@@ -1,6 +1,6 @@
 import subprocess
-from PyQt6.QtWidgets import QMainWindow, QWidget,  QListWidget, QLabel, QPushButton, QMessageBox, \
-  QGridLayout
+from PyQt6.QtWidgets import QMainWindow, QWidget, QListWidget, QLabel, QPushButton, QMessageBox, \
+    QGridLayout, QTableWidgetItem
 
 from gui.widgets.rdp_dialog import RDPDialog
 from gui.windows.recommend_window import RecommendWindow
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         grid_layout.addWidget(self.rdp_btn,2,0)
         grid_layout.addWidget(self.search_window,0,1)
         grid_layout.addWidget(self.song_list,1,1,2,2)
-        grid_layout.addWidget(self.recommend_resource_btn,1,0,3,0)
+        grid_layout.addWidget(self.recommend_resource_btn,5,0)
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
@@ -142,9 +142,9 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.status_label.setText('WRONG_PLAY_SONG')
 
-    def open_recommend_resource_window(self):
-        self.recommend_resource_window=RecommendWindow(self.cookies)
-        self.recommend_resource_window.show()
+
+
+
     def on_song_clicked_from_search(self, song_id):
         try:
             self.recommend_api.get_songs_url(song_id)
@@ -152,6 +152,27 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.status_label.setText('播放歌曲时出错')
             print(f"播放歌曲出错: {e}")
+
+    def open_recommend_resource_window(self):
+        self.recommend_resource_window = RecommendWindow(self.cookies)
+        self.recommend_resource_window.track_songs.connect(self.update_search_results)
+        self.recommend_resource_window.show()
+
+    def update_search_results(self,songs):
+        self.search_window.result_table.clearContents()
+        self.search_window.result_table.setRowCount(len(songs))
+        for row,song in enumerate(songs):
+            self.search_window.result_table.setItem(row,0,QTableWidgetItem(song['name']))
+            self.search_window.result_table.setItem(row,1,QTableWidgetItem(str(song['id'])))
+            self.search_window.result_table.setItem(row,2,QTableWidgetItem(song['artists']))
+            self.search_window.result_table.setItem(row,3,QTableWidgetItem(song['album']))
+            duration_ms=song['dt']
+            minutes=duration_ms // (1000*60)
+            seconds=(duration_ms // 1000)% 60
+            self.search_window.result_table.setItem(row,5,QTableWidgetItem(f"{minutes:02d}:{seconds:02d}"))
+
+
+
 
 
 

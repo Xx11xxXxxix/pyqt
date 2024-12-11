@@ -99,7 +99,7 @@ class Song:
     privilege: Privilege
 
 class RecommendWindow(QWidget):
-    songs_ready=pyqtSignal(list)
+    track_songs=pyqtSignal(list)
 
     def __init__(self, cookies):
         super().__init__()
@@ -157,7 +157,7 @@ class RecommendWindow(QWidget):
 
             results=self.music_service.get_playlist_tracks(
                 playlist_id=playlist_id,
-                limit=playlist_track_count,
+                limit=20,
                 offset=0,
                 cookies=self.cookies
             )
@@ -178,8 +178,7 @@ class RecommendWindow(QWidget):
                     'dt': track.get('dt', 0)
                 }
                 songs.append(song)
-
-            self.songs_ready.emit(songs)
+            self.track_songs.emit(songs)
         else:
             QMessageBox.warning(self, 'NO!', 'WRONG_RECOMMEND_track_SONGS。')
 
