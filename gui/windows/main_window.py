@@ -2,6 +2,7 @@ import subprocess
 from PyQt6.QtWidgets import QMainWindow, QWidget, QListWidget, QLabel, QPushButton, QMessageBox, \
     QGridLayout, QTableWidgetItem
 
+from gui.widgets.comment_widget import CommentWidget
 from gui.widgets.rdp_dialog import RDPDialog
 from gui.windows.recommend_window import RecommendWindow
 from gui.windows.search_window import SearchWindow
@@ -26,26 +27,26 @@ class MainWindow(QMainWindow):
         self.search_window.song_clicked.connect(self.play_song_by_id)
 
     def init_ui(self):
-        self.setWindowTitle('已闻君，诸事安康。 遇佳人，不久婚嫁。 已闻君，得偿所想。 料得是，卿识君望')
-        self.setGeometry(100, 100, 800, 600)
-
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-
         grid_layout=QGridLayout(central_widget)
+
+        self.setWindowTitle('已闻君，诸事安康。 遇佳人，不久婚嫁。 已闻君，得偿所想。 料得是，卿识君望')
+        self.setGeometry(100, 100, 800, 600)
 
         self.remote_control_btn = QPushButton('点我开远程')
         self.rdp_btn = QPushButton('点我控人')
         self.search_window=SearchWindow(self.cookies)
         self.song_list=QListWidget()
         self.recommend_resource_btn = QPushButton('推荐歌单')
+        self.comment_widget=CommentWidget()
 
 
         grid_layout.addWidget(self.remote_control_btn,0,0)
         grid_layout.addWidget(self.rdp_btn,2,0)
         grid_layout.addWidget(self.search_window,0,1)
-        grid_layout.addWidget(self.song_list,1,1,2,2)
         grid_layout.addWidget(self.recommend_resource_btn,5,0)
+        grid_layout.addWidget(self.comment_widget,1,1,2,2)
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
@@ -100,9 +101,10 @@ class MainWindow(QMainWindow):
 
     def on_song_url_received(self, song_id: str, url: str):
         if url:
+            if hasattr(self, 'comment_widget'):
+                self.comment_widget.update_for_song(song_id)
             self.status_label.setText(f'GotitURL {song_id}')
             print(f"播放器的URL: {url}")
-            # 调用播放器控件的播放方法
             self.player_controls.player_service.play_url(url)
         else:
             self.status_label.setText(f'CAO的URL {song_id}')
@@ -115,6 +117,7 @@ class MainWindow(QMainWindow):
         try:
             self.recommend_api.get_songs_url(song_id)
             self.status_label.setText(f'wATTING........id:{song_id}')
+
         except Exception as e:
             self.status_label.setText('WRONG_PLAY_SONG')
 
@@ -126,8 +129,7 @@ class MainWindow(QMainWindow):
             self.recommend_api.get_songs_url(song_id)
             self.status_label.setText(f'WAITING......ID:{song_id}')
         except Exception as e:
-            self.status_label.setText('播放歌曲时出错')
-            print(f"播放歌曲出错: {e}")
+            self.status_label.setText('WRONG_PLAYSONG')
 
     def open_recommend_resource_window(self):
         self.recommend_resource_window = RecommendWindow(self.cookies)
