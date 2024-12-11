@@ -20,7 +20,6 @@ class MainWindow(QMainWindow):
         self.BASE_URL = "http://121.36.9.139:3000"
         self.init_ui()
         self.check_remote_control_status()
-        self.recommend_api.daily_songs_received.connect(self.on_daily_songs_received)
         self.recommend_api.song_url_received.connect(self.on_song_url_received)
         self.is_requesting = False
 
@@ -36,7 +35,6 @@ class MainWindow(QMainWindow):
         grid_layout=QGridLayout(central_widget)
 
         self.remote_control_btn = QPushButton('点我开远程')
-        self.get_recommend_btn = QPushButton('不主动就是不喜欢了[多多捂脸]')
         self.rdp_btn = QPushButton('点我控人')
         self.search_window=SearchWindow(self.cookies)
         self.song_list=QListWidget()
@@ -44,7 +42,6 @@ class MainWindow(QMainWindow):
 
 
         grid_layout.addWidget(self.remote_control_btn,0,0)
-        grid_layout.addWidget(self.get_recommend_btn,1,0)
         grid_layout.addWidget(self.rdp_btn,2,0)
         grid_layout.addWidget(self.search_window,0,1)
         grid_layout.addWidget(self.song_list,1,1,2,2)
@@ -52,7 +49,6 @@ class MainWindow(QMainWindow):
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
-        self.get_recommend_btn.clicked.connect(self.get_daily_songs)
         self.rdp_btn.clicked.connect(self.show_rdp_dialog)
         self.song_list.itemClicked.connect(self.on_song_clicked)
         self.recommend_resource_btn.clicked.connect(self.open_recommend_resource_window)
@@ -90,27 +86,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, '完了', f'完了: {str(e)}')
 
-    def get_daily_songs(self):
-        if self.is_requesting:
-            print("卧槽重复请求了一会闪退")
-            return
 
-        try:
-            self.is_requesting = True
-            self.status_label.setText('...')
-            self.recommend_api.get_daily_songs()
-        except Exception as e:
-            print(f"RItuicuo: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            self.status_label.setText(f'aiaaaa: {str(e)}')
-        finally:
-            self.is_requesting = False
-
-    def on_daily_songs_received(self, song_list):
-        self.song_list.clear()
-        for song in song_list:
-            self.song_list.addItem(f"{song.name}ID:{song.id}")
 
     def on_song_clicked(self, item):
         text = item.text()
