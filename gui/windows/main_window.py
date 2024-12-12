@@ -19,6 +19,10 @@ class MainWindow(QMainWindow):
         self.recommend_api.set_cookies(cookies)
 
         self.BASE_URL = "http://121.36.9.139:3000"
+
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
         self.init_ui()
         self.check_remote_control_status()
         self.recommend_api.song_url_received.connect(self.on_song_url_received)
@@ -27,9 +31,12 @@ class MainWindow(QMainWindow):
         self.search_window.song_clicked.connect(self.play_song_by_id)
 
     def init_ui(self):
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        grid_layout=QGridLayout(central_widget)
+        grid_layout=QGridLayout(self.central_widget)
+
+        self.player_controls = PlayerControls(self)
+        self.playlist_widget=QListWidget(self)
+
+
 
         self.setWindowTitle('已闻君，诸事安康。 遇佳人，不久婚嫁。 已闻君，得偿所想。 料得是，卿识君望')
         self.setGeometry(100, 100, 800, 600)
@@ -53,12 +60,14 @@ class MainWindow(QMainWindow):
         self.rdp_btn.clicked.connect(self.show_rdp_dialog)
         self.song_list.itemClicked.connect(self.on_song_clicked)
         self.recommend_resource_btn.clicked.connect(self.open_recommend_resource_window)
+        self.search_window.add_to_playlist_signal.connect(self.on_add_to_playlist)
 
 
-        self.player_controls = PlayerControls()
         self.status_label = QLabel('SENDIT!!!!!')
+
         grid_layout.addWidget(self.player_controls,3,0,1,3)
         grid_layout.addWidget(self.status_label,4,0,1,3)
+        grid_layout.addWidget(self.playlist_widget,1,2)
 
 
     def check_remote_control_status(self):
@@ -135,6 +144,22 @@ class MainWindow(QMainWindow):
         self.recommend_resource_window = RecommendWindow(self.cookies)
         self.recommend_resource_window.track_songs.connect(self.update_search_results)
         self.recommend_resource_window.show()
+
+    def on_add_to_playlist(self,song_info):
+        print(f"on_add_to_playlist 被调用，歌曲信息: {song_info}")
+        self.player_controls.add_to_playlist(song_info)
+        item_text=f"{song_info['name']}-{song_info['artists']}"
+        self.playlist_widget.addItem(item_text)
+        print(f"列表 :{item_text}")
+
+
+
+
+
+
+
+
+
 
     def update_search_results(self, songs):
         self.search_window.result_table.clearContents()

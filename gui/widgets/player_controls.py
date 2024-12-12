@@ -9,8 +9,8 @@ from services.recommend_songs import RecommendAPI
 class PlayerControls(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.player_service = PlayerService()
         self.recommend_api=RecommendAPI()
+        self.recommend_api.song_url_received.connect(self.on_song_url_received)
         self.play_mode = PlayMode.SEQUENCE
 
         self.playlist=[]
@@ -21,6 +21,7 @@ class PlayerControls(QWidget):
 
     def init_ui(self):
         layout = QHBoxLayout(self)
+        self.player_service = PlayerService.instance()
 
         self.play_button = QPushButton('打灭')
         self.next_button=QPushButton('下一首')
@@ -87,9 +88,7 @@ class PlayerControls(QWidget):
     def update_duration(self, duration):
         self.position_slider.setRange(0, duration)
 
-    def add_to_playlist(self, song):
-        """添加歌曲到播放列表"""
-        self.playlist.append(song)
+
 
     def set_playlist(self, songs):
         """设置整个播放列表"""
@@ -102,12 +101,14 @@ class PlayerControls(QWidget):
         self.current_index = -1
 
     def play_next(self):
-        print(111)
+        print("播放下一首被调用")
+
         """播放下一首"""
         if not self.playlist:
+            print("播放列表为空，无法播放下一首")
             return
-
         self.current_index = (self.current_index + 1) % len(self.playlist)
+        print(f"当前索引更新为: {self.current_index}")
         self.play_current_song()
 
     def play_previous(self):
@@ -122,9 +123,15 @@ class PlayerControls(QWidget):
         """播放当前索引的歌曲"""
         if 0 <= self.current_index < len(self.playlist):
             current_song = self.playlist[self.current_index]
+            print(current_song)
             song_id = current_song.get('id')
             if song_id:
+                print("yousong_id")
+                self.recommend_api.song_url_received.connect(self.on_song_url_received)
                 self.recommend_api.get_songs_url(song_id)
+    def on_song_url_received(self,song_id:str,url:str):
+        print(f"shoudao{url}")
+        self.player_service.play_url(url)
 
     def connect_signals(self):
         self.player_service.position_changed.connect(self.update_position)
@@ -133,13 +140,23 @@ class PlayerControls(QWidget):
         self.player_service.media_player.mediaStatusChanged.connect(self.on_media_status_changed)
 
     def on_media_status_changed(self, status):
-        """监听播放状态变化"""
+        print(f"媒体状态变化: {status}")
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            # 播放完成时自动播放下一首
+            print("播放完成，自动播放下一首")
             self.play_next()
 
     def set_play_mode(self, mode):
         self.play_mode = mode
+
+    def add_to_playlist(self,song_info):
+        print(f"PlayerControls.add_to_playlist 被调用，歌曲信息: {song_info}")
+        self.playlist.append(song_info)
+        print(self.parent())
+
+        if len(self.playlist)==1:
+            self.current_index=0
+            self.play_current_song()
+
 
     @staticmethod
     def format_time(ms):
@@ -151,9 +168,9 @@ class PlayerControls(QWidget):
 
 
 class PlayMode:
-    SEQUENCE = 0  # 顺序播放
-    LOOP = 1  # 列表循环
-    SINGLE = 2  # 单曲循环
-    RANDOM = 3  # 随机播放
+    SEQUENCE = 0
+    LOOP = 1
+    SINGLE = 2
+    RANDOM = 3
 
 

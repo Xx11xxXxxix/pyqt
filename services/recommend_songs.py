@@ -122,29 +122,6 @@ class RecommendAPI(QObject):
                     self.current_reply = None
             except Exception as e:
                 print(f"清理出错: {e}")
-    # def handle_daily_songs_response(self, reply):
-    #     reply.deleteLater()
-    #     if reply.error() == QNetworkReply.NetworkError.NoError:
-    #         try:
-    #             data = json.loads(bytes(reply.readAll()).decode())
-    #             if not data.get('data'):
-    #                 print("shadoumeyou")
-    #                 return
-    #             songs = data['data'].get('dailySongs', [])
-    #             song_list = []
-    #
-    #             for song_data in songs:
-    #                 song = Song(
-    #                     name=song_data.get('name', ''),
-    #                     id=song_data.get('id', 0)
-    #                 )
-    #                 song_list.append(song)
-    #
-    #             self.daily_songs_received.emit(song_list)
-    #         except Exception as e:
-    #             print(f"cao:{e}")
-    #     else:
-    #         print(f"APIcuo:{reply.error()}")
 
     def get_songs_url(self, song_id: int):
         if not self._cookies:

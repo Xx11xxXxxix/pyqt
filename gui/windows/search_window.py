@@ -108,6 +108,7 @@ class Song:
 class SearchWindow(QWidget):
     BASE_URL = "http://121.36.9.139:3000"
     song_clicked = pyqtSignal(int)
+    add_to_playlist_signal=pyqtSignal(dict)
 
     def __init__(self, cookies):
         super().__init__()
@@ -194,15 +195,27 @@ class SearchWindow(QWidget):
     def show_context_menu(self, position):
         row = self.result_table.rowAt(position.y())
         if row >= 0:
-            id_item = self.result_table.item(row, 1)
-            if id_item:
-                try:
-                    song_id = int(id_item.text())
-                    menu = SongContextMenu(song_id, self)
-                    menu.show_first_listen_info.connect(self.handle_first_listen_info)
-                    menu.exec(self.result_table.viewport().mapToGlobal(position))
-                except ValueError:
-                    pass
+            song_info={
+                'id':int(self.result_table.item(row,1).text()),
+                'name':self.result_table.item(row,0).text(),
+                'artists':self.result_table.item(row,2).text(),
+                'album':self.result_table.item(row,3).text(),
+                'duration':self.result_table.item(row,5).text()
+            }
+            menu=SongContextMenu(song_info,self)
+            menu.show_first_listen_info.connect(self.handle_first_listen_info)
+            menu.add_to_playlist.connect(self.handle_add_to_playlist)
+            menu.exec(self.result_table.viewport().mapToGlobal(position))
+
+            # id_item = self.result_table.item(row, 1)
+            # if id_item:
+            #     try:
+            #         song_id = int(id_item.text())
+            #         menu = SongContextMenu(song_id, self)
+            #         menu.show_first_listen_info.connect(self.handle_first_listen_info)
+            #         menu.exec(self.result_table.viewport().mapToGlobal(position))
+            #     except ValueError:
+            #         pass
 
     def handle_first_listen_info(self, song_id):
         try:
@@ -221,6 +234,9 @@ class SearchWindow(QWidget):
         except Exception as e:
             QMessageBox.warning(self, "NO!", f"WRONG_IN_MEMORY: {e}")
 
+    def handle_add_to_playlist(self,song_info):
+        if hasattr(self,'add_to_playlist_signal'):
+            self.add_to_playlist_signal.emit(song_info)
 
     def update_results_list(self, results):
         self.result_table.clearContents()

@@ -11,12 +11,14 @@ class PlayerService(QObject):
     @classmethod
     def instance(cls):
         if cls._instance is None:
-            cls.instance=cls()
-        return cls.instance
+            cls._instance = cls()
+        return cls._instance
+
 
 
     def __init__(self):
         super().__init__()
+
         self.media_player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.media_player.setAudioOutput(self.audio_output)
@@ -24,9 +26,11 @@ class PlayerService(QObject):
         self.media_player.durationChanged.connect(self._on_duration_changed)
 
     def play_url(self, url: str):
-        print(1)
+        print(f'收到的url:{url}')
         self.media_player.setSource(QUrl(url))
         self.media_player.play()
+        print(f'开始播放{url}')
+
 
     def play_pause(self):
         if self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
