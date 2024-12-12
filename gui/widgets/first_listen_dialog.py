@@ -8,7 +8,15 @@ class FirstListenDialog(QDialog):
     def __init__(self, data, message, parent=None):
         super().__init__(parent)
         self.setWindowTitle("你还记得吗")
+        self.data=data or {}
+        self.message=message or ""
         self.setGeometry(100, 100, 600, 800)
+        self.song_info = self.data.get('songInfoDto', {})
+        self.first_listen = self.data.get('musicFirstListenDto', {})
+        self.total_play = self.data.get('musicTotalPlayDto', {})
+        self.play_most = self.data.get('musicPlayMostDto', {}) or {}
+        self.like_song = self.data.get('musicLikeSongDto', {}) or {}
+        self.frequent_listen = self.data.get('musicFrequentListenDto', {}) or {}
         layout = QVBoxLayout()
 
         cover_url = data.get('songInfoDto', {}).get('coverUrl')
@@ -48,12 +56,12 @@ class FirstListenDialog(QDialog):
         # coverUrl_label = QLabel(f"coverUrl: {song_info.get('coverUrl')}")
         # type_label = QLabel(f"type: {song_info.get('type')}")
         song_info_label=QLabel(
-            f"songId:{song_info.get('songId')}|"
-            f"songName:{song_info.get('songName')}|"
-            f"singer:{song_info.get('singer')}|"
-            f"pubTime:{song_info.get('pubTime')}|"
-            f"coverUrl:{song_info.get('coverUrl')}|"
-            f"type:{song_info.get('type')}|"
+            f"歌曲ID哟：{self.song_info.get('songId')}|"
+            f"歌曲名称是：{self.song_info.get('songName')}|"
+            f"歌手是：{self.song_info.get('singer')}|"
+            f"发布时间是：{self.song_info.get('pubTime')}|"
+            f"封面链接哦：{self.song_info.get('coverUrl')}|"
+            f"类型为：{self.song_info.get('type')}|"
         )
         song_info_label.setWordWrap(True)
 
@@ -69,16 +77,16 @@ class FirstListenDialog(QDialog):
         # meetDurationDesc_label = QLabel(f"meetDurationDesc: {first_listen.get('meetDurationDesc')}")
         # listenTime_label = QLabel(f"listenTime: {first_listen.get('listenTime')}")
         first_listen_label=QLabel(
-            f"date:{first_listen.get('date')}|"
-            f"season:{first_listen.get('season')}|"
-            f"period:{first_listen.get('period')}|"
-            f"time:{first_listen.get('time')}|"
-            f"mainTitle:{first_listen.get('mainTitle')}|"
-            f"subTitle:{first_listen.get('subTitle')}|"
-            f"desc:{first_listen.get('desc')}|"
-            f"meetDuration:{first_listen.get('meetDuration')}|"
-            f"meetDurationDesc:{first_listen.get('meetDurationDesc')}|"
-            f"listenTime:{first_listen.get('listenTime')}|"
+            f"欧尼酱从什么时间开始听的呢：{self.first_listen.get('date')}|"
+            f"季节是：{self.first_listen.get('season')}|"
+            f"时期是：{self.first_listen.get('period')}|"
+            f"时间是：{self.first_listen.get('time')}|"
+            f"主标题为：{self.first_listen.get('mainTitle')}|"
+            f"副标题为：{self.first_listen.get('subTitle')}|"
+            f"描述是：{self.first_listen.get('desc')}|"
+            f"见面时长为：{self.first_listen.get('meetDuration')}|"
+            f"见面时长描述为：{self.first_listen.get('meetDurationDesc')}|"
+            f"听歌时间是：{self.first_listen.get('listenTime')}|"
 
         )
         first_listen_label.setWordWrap(True)
@@ -90,10 +98,10 @@ class FirstListenDialog(QDialog):
         # text_label = QLabel(f"text: {total_play.get('text')}")
         # maxPlayTimes_label = QLabel(f"maxPlayTimes: {total_play.get('maxPlayTimes')}")
         total_play_label=QLabel(
-            f"playCount:{total_play.get('playCount')}|"
-            f"duration:{total_play.get('duration')}|"
-            f"text:{total_play.get('text')}|"
-            f"maxPlayTimes:{total_play.get('maxPlayTimes')}|"
+            f"播放次数：{self.total_play.get('playCount')}|"
+            f"总时长为：{self.total_play.get('duration')}|"
+            f"文字内容是：{self.total_play.get('text')}|"
+            f"最大播放次数为：{self.total_play.get('maxPlayTimes')}|"
         )
         total_play_label.setWordWrap(True)
 
@@ -103,10 +111,10 @@ class FirstListenDialog(QDialog):
         # play_text_label = QLabel(f"text: {play_most.get('text')}")
         # mostPlayedCount_label = QLabel(f"mostPlayedCount: {play_most.get('mostPlayedCount')}")
         play_most_label = QLabel(
-            f"date:{play_most.get('date')}|"
-            f"timestamp:{play_most.get('timestamp')}|"
-            f"text:{play_most.get('text')}|"
-            f"mostPlayedCount:{play_most.get('mostPlayedCount')}|"
+            f"欧尼在{self.play_most.get('date', 'N/A')}天听的：|" 
+            f"为什么在{self.play_most.get('timestamp', 'N/A')}点听呢：|"
+            f"原来欧尼是{self.play_most.get('text', 'N/A')}这样的人|"
+            f"欧尼好厉害佑来了{self.play_most.get('mostPlayedCount', 'N/A')}次！|"
         )
         play_most_label.setWordWrap(True)
 
@@ -122,15 +130,15 @@ class FirstListenDialog(QDialog):
         # redDesc_label = QLabel(f"redDesc: {like_song.get('redDesc')}")
         # redTimeStamp_label = QLabel(f"redTimeStamp: {like_song.get('redTimeStamp')}")
         like_song_label = QLabel(
-            f"text:{like_song.get('text')}|"
-            f"like:{like_song.get('like')}|"
-            f"collect:{like_song.get('collect')}|"
-            f"mainTitle:{like_song.get('mainTitle')}|"
-            f"subTitle:{like_song.get('subTitle')}|"
-            f"desc:{like_song.get('desc')}|"
-            f"redTime:{like_song.get('redTime')}|"
-            f"redDesc:{like_song.get('redDesc')}|"
-            f"redTimeStamp:{like_song.get('redTimeStamp')}|"
+            f"文字内容是：{self.like_song.get('text')}|"
+            f"喜欢数为：{self.like_song.get('like')}|"
+            f"收藏数为：{self.like_song.get('collect')}|"
+            f"主标题为：{self.like_song.get('mainTitle')}|"
+            f"副标题为：{self.like_song.get('subTitle')}|"
+            f"描述是：{self.like_song.get('desc')}|"
+            f"红色时间为：{self.like_song.get('redTime')}|"
+            f"红色描述为：{self.like_song.get('redDesc')}|"
+            f"红色时间戳为：{self.like_song.get('redTimeStamp')}|"
         )
         like_song_label.setWordWrap(True)
 
@@ -142,16 +150,16 @@ class FirstListenDialog(QDialog):
         # endTime_label = QLabel(f"endTime: {frequent_listen.get('endTime')}")
         # timeDesc_label = QLabel(f"timeDesc: {frequent_listen.get('timeDesc')}")
         frequent_listen_label = QLabel(
-            f"describe:{frequent_listen.get('describe')}|"
-            f"startTime:{frequent_listen.get('startTime')}|"
-            f"endTime:{frequent_listen.get('endTime')}|"
-            f"timeDesc:{frequent_listen.get('timeDesc')}|"
+            f"来描述一下哦：{self.frequent_listen.get('describe')}|"
+            f"开始时间是：{self.frequent_listen.get('startTime')}|"
+            f"结束时间是：{self.frequent_listen.get('endTime')}|"
+            f"时间描述为：{self.frequent_listen.get('timeDesc')}|"
         )
         frequent_listen_label.setWordWrap(True)
 
         scroll_layout.addWidget(title_label)
         scroll_layout.addWidget(message_label)
-        layout.addWidget(QLabel("songInfoDto:"))
+        layout.addWidget(QLabel("回忆来了哦:"))
 
         scroll_layout.addWidget(song_info_label)
         scroll_layout.addWidget(first_listen_label)
@@ -209,7 +217,7 @@ class FirstListenDialog(QDialog):
         scroll_widget.setLayout(scroll_layout)
         scroll_area.setWidget(scroll_widget)
         layout.addWidget(scroll_area)
-        
+
 
         close_button = QPushButton("关闭")
         close_button.clicked.connect(self.accept)
@@ -239,6 +247,5 @@ class FirstListenDialog(QDialog):
                 print("NO_BACKGROUND")
         except Exception as e:
             print(f"NO!:{e}")
-
 
 

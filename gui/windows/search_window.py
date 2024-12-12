@@ -6,14 +6,16 @@ from PyQt6.QtCore import QTimer, pyqtSignal, Qt
 
 from gui.widgets.first_listen_dialog import FirstListenDialog
 from gui.widgets.song_context_menu import SongContextMenu
-from services.first_listen_service import  FirstListenService
+from services.first_listen_service import FirstListenService
 from services.music_service import MusicService
+
 @dataclass
 class Artist:
     id: int
     name: str
     aliases: List[str] = field(default_factory=list)
     alia: List[str] = field(default_factory=list)
+
 
 @dataclass
 class Album:
@@ -22,6 +24,7 @@ class Album:
     picUrl: str
     pic_str: str
     pic: int
+
 
 @dataclass
 class Privilege:
@@ -52,6 +55,7 @@ class Privilege:
     freeTrialPrivilege: Dict[str, Any]
     rightSource: int
     chargeInfoList: List[Dict[str, Any]]
+
 
 @dataclass
 class Song:
@@ -100,20 +104,20 @@ class Song:
     publishTime: int
     privilege: Privilege
 
+
 class SearchWindow(QWidget):
     BASE_URL = "http://121.36.9.139:3000"
     song_clicked = pyqtSignal(int)
 
     def __init__(self, cookies):
         super().__init__()
-        self.cookies=cookies
-        self.music_service=MusicService()
+        self.cookies = cookies
+        self.music_service = MusicService()
         self.first_listen_service = FirstListenService()
-        self.song_ids={}
+        self.song_ids = {}
         self.init_ui()
 
-
-        self.search_timer=QTimer()
+        self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.perform_search)
 
@@ -123,8 +127,9 @@ class SearchWindow(QWidget):
         self.search_input.setPlaceholderText("SEARCH")
 
         self.result_table = QTableWidget()
-        self.search_headers = ["歌曲", "ID", "艺术家", "专辑", "专辑封面", "时长", "收费类型", "无损音质", "高品质", "高清音质",
-                   "MV", "热门度", "发行时间", "版权", "版本"]
+        self.search_headers = ["歌曲", "ID", "艺术家", "专辑", "专辑封面", "时长", "收费类型", "无损音质", "高品质",
+                               "高清音质",
+                               "MV", "热门度", "发行时间", "版权", "版本"]
         self.daily_headers = ["歌曲", "ID", "艺术家", "专辑", "专辑封面", "时长", "收费类型", "无损音质", "高品质",
                               "高清音质",
                               "MV", "热门度", "发行时间", "版权", "版本", "推荐原因", "推荐说明", "播放频率"]
@@ -134,12 +139,10 @@ class SearchWindow(QWidget):
         self.recommend_songs_daily_btn = QPushButton('看你的破日推')
         self.result_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
-
         self.recommend_songs_daily_btn.clicked.connect(self.recommend_songs_daily)
         self.result_table.cellClicked.connect(self.on_result_table_clicked)
         self.search_input.textChanged.connect(self.on_search_text_changed)
         self.result_table.customContextMenuRequested.connect(self.show_context_menu)
-
 
         layout.addWidget(self.recommend_songs_daily_btn)
         layout.addWidget(self.search_input)
@@ -147,20 +150,20 @@ class SearchWindow(QWidget):
 
         self.setLayout(layout)
 
-    def on_search_text_changed(self,text):
+    def on_search_text_changed(self, text):
         self.search_timer.stop()
         if text:
             self.search_timer.start(500)
 
     def perform_search(self):
-        keyword=self.search_input.text().strip()
+        keyword = self.search_input.text().strip()
         if not keyword:
             self.result_table.clearContents()
             self.result_table.setRowCount(0)
             return
 
         try:
-            results=self.music_service.search_all(keyword,type=1)
+            results = self.music_service.search_all(keyword, type=1)
             self.update_results_list(results)
         except Exception as e:
             print(f"SEARCH_WRONG:{e}")
@@ -168,7 +171,6 @@ class SearchWindow(QWidget):
             self.result_table.setColumnCount(1)
             self.result_table.setHorizontalHeaderLabels(["WHAT?"])
             self.result_table.setItem(0, 0, QTableWidgetItem("SEARCH_TABLE_WRONG"))
-
 
     def on_result_table_clicked(self, row, column):
         id_item = self.result_table.item(row, 1)
@@ -178,15 +180,17 @@ class SearchWindow(QWidget):
                 self.song_clicked.emit(song_id)
             except ValueError:
                 print('WRONG Song ID')
+
     def recommend_songs_daily(self):
         try:
-            results=self.music_service.get_recommend_songs_daily(self.cookies)
+            results = self.music_service.get_recommend_songs_daily(self.cookies)
             if results.get('code') == 200 and 'data' in results and 'dailySongs' in results['data']:
                 self.update_results_list(results)
             else:
-                QMessageBox.warning(self,"NO!","WRONG_IN_recommend_songs_daily")
+                QMessageBox.warning(self, "NO!", "WRONG_IN_recommend_songs_daily")
         except Exception as e:
-            QMessageBox.critical(self,'NO!',f'WRONG_IN_recommend_songs_daily:{e}')
+            QMessageBox.critical(self, 'NO!', f'WRONG_IN_recommend_songs_daily:{e}')
+
     def show_context_menu(self, position):
         row = self.result_table.rowAt(position.y())
         if row >= 0:
@@ -203,35 +207,19 @@ class SearchWindow(QWidget):
     def handle_first_listen_info(self, song_id):
         try:
             result = self.first_listen_service.get_first_listen_info(song_id, self.cookies)
-            full_data = result.get('data', {})
-            message = result.get('message', '')
             print(result)
-            if full_data:
-                dialog = FirstListenDialog(full_data, message, self)
-                dialog.exec()
+            if result and 'data' in result:
+                full_data = result.get('data', {})
+                message = result.get('message', '')
+                if full_data:
+                    dialog = FirstListenDialog(full_data, message, self)
+                    dialog.exec()
+                else:
+                    QMessageBox.information(self, "TIP!", "NO_MEMORY")
             else:
-                QMessageBox.information(self, "提示", "没有相关的听歌记录")
+                QMessageBox.information(self,'TIP!',"NO_MEMORY")
         except Exception as e:
-            QMessageBox.warning(self, "错误", f"获取听歌信息失败: {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            QMessageBox.warning(self, "NO!", f"WRONG_IN_MEMORY: {e}")
 
 
     def update_results_list(self, results):
@@ -241,14 +229,14 @@ class SearchWindow(QWidget):
             self.result_table.setColumnCount(len(self.search_headers))
             self.result_table.setHorizontalHeaderLabels(self.search_headers)
         elif 'data' in results and 'dailySongs' in results['data']:
-            songs_data=results['data']['dailySongs']
+            songs_data = results['data']['dailySongs']
             self.result_table.setColumnCount(len(self.daily_headers))
             self.result_table.setHorizontalHeaderLabels(self.daily_headers)
         else:
             self.result_table.setRowCount(0)
             self.result_table.setColumnCount(1)
             self.result_table.setHorizontalHeaderLabels(["INFO!!"])
-            self.result_table.setItem(0,0,QTableWidgetItem("NO!"))
+            self.result_table.setItem(0, 0, QTableWidgetItem("NO!"))
             return
 
         self.result_table.setRowCount(len(songs_data))
@@ -377,8 +365,7 @@ class SearchWindow(QWidget):
             self.result_table.setItem(row, 13, QTableWidgetItem(str(song.copyright)))
             self.result_table.setItem(row, 14, QTableWidgetItem(str(song.version)))
             if 'data' in results and 'dailySongs' in results['data']:
-                self.result_table.setItem(row,15,QTableWidgetItem(song_data.get('reason','')))
-                self.result_table.setItem(row,16,QTableWidgetItem(song_data.get('recommendReason','')))
-                alg=song_data.get('alg','')
-                self.result_table.setItem(row,17,QTableWidgetItem(alg))
-
+                self.result_table.setItem(row, 15, QTableWidgetItem(song_data.get('reason', '')))
+                self.result_table.setItem(row, 16, QTableWidgetItem(song_data.get('recommendReason', '')))
+                alg = song_data.get('alg', '')
+                self.result_table.setItem(row, 17, QTableWidgetItem(alg))

@@ -4,8 +4,8 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 class PlayerService(QObject):
     _instance = None
-    playback_state_changed = pyqtSignal(bool)  # 播放状态信号
-    position_changed = pyqtSignal(int)  # 播放位置的信号这个牛逼
+    playback_state_changed = pyqtSignal(bool)
+    position_changed = pyqtSignal(int)
     duration_changed = pyqtSignal(int)
 
     @classmethod

@@ -133,7 +133,6 @@ class RecommendWindow(QWidget):
     def get_recommend_resource(self):
         try:
             results = self.music_service.get_recommend_resource(self.cookies)
-            print(results)
             self.update_results_list(results)
         except Exception as e:
             QMessageBox.critical(self, 'NO!!', f'WRONG_RECOMMEND_RECOUCE: {e}')
@@ -165,7 +164,6 @@ class RecommendWindow(QWidget):
             QMessageBox.critical(self,'NO!',f'WRONG_RECOMMEND_track_id: {e}')
 
     def process_playlist_tracks(self, results):
-        print(results)
         if results.get('code') == 200 and 'songs' in results:
             tracks = results['songs']
             songs = []
@@ -215,7 +213,6 @@ class RecommendWindow(QWidget):
 
 
     def update_results_list(self, results):
-        print(results)
         self.result_table.clearContents()
         if results.get('code') == 200 and 'recommend' in results:
             playlists_data = results['recommend']
