@@ -121,7 +121,7 @@ class RecommendAPI(QObject):
                 if reply == self.current_reply:
                     self.current_reply = None
             except Exception as e:
-                print(f"清理出错: {e}")
+                print(f"山列表出错了: {e}")
 
     def get_songs_url(self, song_id: int):
         if not self._cookies:

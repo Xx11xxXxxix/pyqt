@@ -26,10 +26,8 @@ class PlayerService(QObject):
         self.media_player.durationChanged.connect(self._on_duration_changed)
 
     def play_url(self, url: str):
-        print(f'收到的url:{url}')
         self.media_player.setSource(QUrl(url))
         self.media_player.play()
-        print(f'开始播放{url}')
 
 
     def play_pause(self):

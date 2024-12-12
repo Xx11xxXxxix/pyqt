@@ -91,28 +91,21 @@ class PlayerControls(QWidget):
 
 
     def set_playlist(self, songs):
-        """设置整个播放列表"""
         self.playlist = songs
         self.current_index = -1
 
     def clear_playlist(self):
-        """清空播放列表"""
         self.playlist = []
         self.current_index = -1
 
     def play_next(self):
-        print("播放下一首被调用")
 
-        """播放下一首"""
         if not self.playlist:
-            print("播放列表为空，无法播放下一首")
             return
         self.current_index = (self.current_index + 1) % len(self.playlist)
-        print(f"当前索引更新为: {self.current_index}")
         self.play_current_song()
 
     def play_previous(self):
-        """播放上一首"""
         if not self.playlist:
             return
 
@@ -120,7 +113,6 @@ class PlayerControls(QWidget):
         self.play_current_song()
 
     def play_current_song(self):
-        """播放当前索引的歌曲"""
         if 0 <= self.current_index < len(self.playlist):
             current_song = self.playlist[self.current_index]
             print(current_song)
@@ -139,16 +131,13 @@ class PlayerControls(QWidget):
         self.player_service.media_player.mediaStatusChanged.connect(self.on_media_status_changed)
 
     def on_media_status_changed(self, status):
-        print(f"媒体状态变化: {status}")
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            print("播放完成，自动播放下一首")
             self.play_next()
 
     def set_play_mode(self, mode):
         self.play_mode = mode
 
     def add_to_playlist(self,song_info):
-        print(f"PlayerControls.add_to_playlist 被调用，歌曲信息: {song_info}")
         self.playlist.append(song_info)
         print(self.parent())
 

@@ -146,11 +146,9 @@ class MainWindow(QMainWindow):
         self.recommend_resource_window.show()
 
     def on_add_to_playlist(self,song_info):
-        print(f"on_add_to_playlist 被调用，歌曲信息: {song_info}")
         self.player_controls.add_to_playlist(song_info)
         item_text=f"{song_info['name']}-{song_info['artists']}"
         self.playlist_widget.addItem(item_text)
-        print(f"列表 :{item_text}")
 
 
 
