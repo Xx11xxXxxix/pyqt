@@ -127,7 +127,6 @@ class PlayerControls(QWidget):
             song_id = current_song.get('id')
             if song_id:
                 print("yousong_id")
-                self.recommend_api.song_url_received.connect(self.on_song_url_received)
                 self.recommend_api.get_songs_url(song_id)
     def on_song_url_received(self,song_id:str,url:str):
         print(f"shoudao{url}")
