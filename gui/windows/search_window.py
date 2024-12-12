@@ -220,7 +220,6 @@ class SearchWindow(QWidget):
     def handle_first_listen_info(self, song_id):
         try:
             result = self.first_listen_service.get_first_listen_info(song_id, self.cookies)
-            print(result)
             if result and 'data' in result:
                 full_data = result.get('data', {})
                 message = result.get('message', '')

@@ -32,15 +32,7 @@ class RecommendAPI(QObject):
     @classmethod
     def set_cookies(cls, cookies):
         cls._cookies = cookies
-    # def get_daily_songs(self):
-    #     if not self._cookies:
-    #         print("zhaocookiequ")
-    #         return
-    #     url = QUrl(f"{self.BASE_URL}/recommend/songs")
-    #     url.setQuery(f"cookie={self._cookies}")
-    #     request = QNetworkRequest(url)
-    #     reply = self.network_manager.get(request)
-    #     reply.finished.connect(lambda: self.handle_daily_songs_response(reply))
+
 
     def get_daily_songs(self):
         if not self._cookies:

@@ -103,6 +103,7 @@ class PlayerControls(QWidget):
         if not self.playlist:
             return
         self.current_index = (self.current_index + 1) % len(self.playlist)
+        print(f"下一首{self.current_index}")
         self.play_current_song()
 
     def play_previous(self):
@@ -110,18 +111,17 @@ class PlayerControls(QWidget):
             return
 
         self.current_index = (self.current_index - 1) % len(self.playlist)
+        print(f"上一首{self.current_index}")
+
         self.play_current_song()
 
     def play_current_song(self):
         if 0 <= self.current_index < len(self.playlist):
             current_song = self.playlist[self.current_index]
-            print(current_song)
             song_id = current_song.get('id')
             if song_id:
-                print("yousong_id")
                 self.recommend_api.get_songs_url(song_id)
     def on_song_url_received(self,song_id:str,url:str):
-        print(f"shoudao{url}")
         self.player_service.play_url(url)
 
     def connect_signals(self):
@@ -139,7 +139,6 @@ class PlayerControls(QWidget):
 
     def add_to_playlist(self,song_info):
         self.playlist.append(song_info)
-        print(self.parent())
 
         if len(self.playlist)==1:
             self.current_index=0
