@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QListWidget, QLabel, QPushButt
 
 from gui.widgets.comment_widget import CommentWidget
 from gui.widgets.rdp_dialog import RDPDialog
+from gui.windows.fm_window import FMWindow
 from gui.windows.recommend_window import RecommendWindow
 from gui.windows.search_window import SearchWindow
 from services.recommend_songs import RecommendAPI
@@ -47,6 +48,8 @@ class MainWindow(QMainWindow):
         self.song_list=QListWidget()
         self.recommend_resource_btn = QPushButton('推荐歌单')
         self.comment_widget=CommentWidget()
+        self.fm_button=QPushButton('FM')
+
 
 
         grid_layout.addWidget(self.remote_control_btn,0,0)
@@ -54,6 +57,7 @@ class MainWindow(QMainWindow):
         grid_layout.addWidget(self.search_window,0,1)
         grid_layout.addWidget(self.recommend_resource_btn,5,0)
         grid_layout.addWidget(self.comment_widget,1,1,2,2)
+        grid_layout.addWidget(self.fm_button,6,0)
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
@@ -61,6 +65,7 @@ class MainWindow(QMainWindow):
         self.song_list.itemClicked.connect(self.on_song_clicked)
         self.recommend_resource_btn.clicked.connect(self.open_recommend_resource_window)
         self.search_window.add_to_playlist_signal.connect(self.on_add_to_playlist)
+        self.fm_button.clicked.connect(self.open_fm_window)
 
 
         self.status_label = QLabel('SENDIT!!!!!')
@@ -149,6 +154,10 @@ class MainWindow(QMainWindow):
         self.player_controls.add_to_playlist(song_info)
         item_text=f"{song_info['name']}-{song_info['artists']}"
         self.playlist_widget.addItem(item_text)
+
+    def open_fm_window(self):
+        self.fm_window=FMWindow(self.cookies)
+        self.fm_window.show()
 
 
 
