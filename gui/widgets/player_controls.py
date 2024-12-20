@@ -1,6 +1,6 @@
 from PyQt6.QtGui import QIcon
 from PyQt6.QtMultimedia import QMediaPlayer
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSlider, QLabel
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSlider, QLabel, QMainWindow, QListWidget
 from PyQt6.QtCore import Qt
 from services.player_service import PlayerService
 from services.recommend_songs import RecommendAPI
@@ -150,6 +150,18 @@ class PlayerControls(QWidget):
         s = round(ms / 1000)
         m, s = divmod(s, 60)
         return f'{m:02d}:{s:02d}'
+
+class PlaylistWindow(QMainWindow):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('PLAY_LIST')
+        self.setGeometry(200,200,400,500)
+
+        self.playlist_widget=QListWidget()
+        self.setCentralWidget(self.playlist_widget)
+    def add_song(self,song_info):
+        item_text=f"{song_info['name']}-{song_info['artists']}"
+        self.playlist_widget.addItem(item_text)
 
 
 

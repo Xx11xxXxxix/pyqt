@@ -5,10 +5,12 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QListWidget, QLabel, QPushButt
 from gui.widgets.comment_widget import CommentWidget
 from gui.widgets.rdp_dialog import RDPDialog
 from gui.windows.fm_window import FMWindow
+from gui.windows.nmap_window import NMAPWindow
 from gui.windows.recommend_window import RecommendWindow
 from gui.windows.search_window import SearchWindow
 from services.recommend_songs import RecommendAPI
-from gui.widgets.player_controls import PlayerControls
+from gui.widgets.player_controls import PlayerControls, PlaylistWindow
+
 
 class MainWindow(QMainWindow):
     def __init__(self, db_manager, user_id, cookies):
@@ -30,17 +32,22 @@ class MainWindow(QMainWindow):
         self.is_requesting = False
 
         self.search_window.song_clicked.connect(self.play_song_by_id)
+        self.playlist_window=None
+
+
 
     def init_ui(self):
         grid_layout=QGridLayout(self.central_widget)
 
         self.player_controls = PlayerControls(self)
-        self.playlist_widget=QListWidget(self)
 
 
 
         self.setWindowTitle('已闻君，诸事安康。 遇佳人，不久婚嫁。 已闻君，得偿所想。 料得是，卿识君望')
         self.setGeometry(100, 100, 800, 600)
+
+        self.nmap_button = QPushButton('Open NMAP Scanner')
+        self.nmap_button.clicked.connect(self.open_nmap_window)
 
         self.remote_control_btn = QPushButton('点我开远程')
         self.rdp_btn = QPushButton('点我控人')
@@ -49,6 +56,7 @@ class MainWindow(QMainWindow):
         self.recommend_resource_btn = QPushButton('推荐歌单')
         self.comment_widget=CommentWidget()
         self.fm_button=QPushButton('FM')
+        self.playlist_button=QPushButton("PLAY_LIST")
 
 
 
@@ -58,6 +66,8 @@ class MainWindow(QMainWindow):
         grid_layout.addWidget(self.recommend_resource_btn,5,0)
         grid_layout.addWidget(self.comment_widget,1,1,2,2)
         grid_layout.addWidget(self.fm_button,6,0)
+        grid_layout.addWidget(self.playlist_button,8,0)
+        grid_layout.addWidget(self.nmap_button, 0, 0)
 
 
         self.remote_control_btn.clicked.connect(self.enable_remote_control)
@@ -66,13 +76,13 @@ class MainWindow(QMainWindow):
         self.recommend_resource_btn.clicked.connect(self.open_recommend_resource_window)
         self.search_window.add_to_playlist_signal.connect(self.on_add_to_playlist)
         self.fm_button.clicked.connect(self.open_fm_window)
+        self.playlist_button.clicked.connect(self.show_playlist)
 
 
         self.status_label = QLabel('SENDIT!!!!!')
 
         grid_layout.addWidget(self.player_controls,3,0,1,3)
         grid_layout.addWidget(self.status_label,4,0,1,3)
-        grid_layout.addWidget(self.playlist_widget,1,2)
 
 
     def check_remote_control_status(self):
@@ -150,14 +160,26 @@ class MainWindow(QMainWindow):
         self.recommend_resource_window.track_songs.connect(self.update_search_results)
         self.recommend_resource_window.show()
 
-    def on_add_to_playlist(self,song_info):
-        self.player_controls.add_to_playlist(song_info)
-        item_text=f"{song_info['name']}-{song_info['artists']}"
-        self.playlist_widget.addItem(item_text)
 
     def open_fm_window(self):
         self.fm_window=FMWindow(self.cookies)
         self.fm_window.show()
+
+    def show_playlist(self):
+        if self.playlist_window is None:
+            self.playlist_window=PlaylistWindow(self)
+        self.playlist_window.show()
+        self.playlist_window.raise_()
+        self.playlist_window.activateWindow()
+    def on_add_to_playlist(self,song_info):
+        self.player_controls.add_to_playlist(song_info)
+        if self.playlist_window:
+            self.playlist_window.add_song(song_info)
+
+    def open_nmap_window(self):
+        # Instantiate the NMAPWindow and show it
+        self.nmap_window = NMAPWindow(self.cookies)
+        self.nmap_window.show()
 
 
 
