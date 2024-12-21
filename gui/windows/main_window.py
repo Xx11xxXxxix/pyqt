@@ -8,6 +8,7 @@ from gui.windows.fm_window import FMWindow
 from gui.windows.nmap_window import NMAPWindow
 from gui.windows.recommend_window import RecommendWindow
 from gui.windows.search_window import SearchWindow
+from services.nmap_service import NMAPService
 from services.recommend_songs import RecommendAPI
 from gui.widgets.player_controls import PlayerControls, PlaylistWindow
 
@@ -30,9 +31,15 @@ class MainWindow(QMainWindow):
         self.check_remote_control_status()
         self.recommend_api.song_url_received.connect(self.on_song_url_received)
         self.is_requesting = False
-
+        self.nmap_service = NMAPService()
+        self.nmap_window = NMAPWindow()
+        self.nmap_service.scan_result.connect(self.nmap_window.display_scan_result)
+        self.nmap_service.error.connect(self.nmap_window.display_scan_result)
+        self.nmap_service.spoofing_status.connect(self.nmap_window.display_scan_result)
+        self.nmap_window.nmap_go.connect(self.handle_nmap_go)
         self.search_window.song_clicked.connect(self.play_song_by_id)
         self.playlist_window=None
+
 
 
 
@@ -177,9 +184,40 @@ class MainWindow(QMainWindow):
             self.playlist_window.add_song(song_info)
 
     def open_nmap_window(self):
-        # Instantiate the NMAPWindow and show it
-        self.nmap_window = NMAPWindow(self.cookies)
-        self.nmap_window.show()
+        if not self.nmap_window.isVisible():
+            self.nmap_window.show()
+        else:
+            self.nmap_window.raise_()
+            self.nmap_window.activateWindow()
+
+    def handle_nmap_go(self, command, ip, target_mac, own_mac, gateway_ip, network_segment):
+        if command == 'scan_all':
+            self.nmap_service.scan_all_and_send_arp_spoof(target_mac, own_mac, gateway_ip, network_segment)
+        elif command == 'scan_by_ip':
+            self.nmap_service.scan_ip_and_send_arp_spoof(ip, target_mac, own_mac, gateway_ip, network_segment)
+
+    def closeEvent(self, event):
+        self.nmap_service.stop_spoofing()
+        if self.nmap_window:
+            self.nmap_window.close()
+        event.accept()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
