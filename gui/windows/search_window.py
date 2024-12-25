@@ -8,7 +8,7 @@ from gui.widgets.first_listen_dialog import FirstListenDialog
 from gui.widgets.song_context_menu import SongContextMenu
 from services.first_listen_service import FirstListenService
 from services.music_service import MusicService
-
+from qasync import asyncSlot
 @dataclass
 class Artist:
     id: int
@@ -106,6 +106,7 @@ class Song:
 
 
 class SearchWindow(QWidget):
+    search_completed=pyqtSignal(dict)
     BASE_URL = "http://121.36.9.139:3000"
     song_clicked = pyqtSignal(int)
     add_to_playlist_signal=pyqtSignal(dict)
@@ -121,6 +122,7 @@ class SearchWindow(QWidget):
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.perform_search)
+        self.search_completed.connect(self.update_results_list)
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -155,6 +157,7 @@ class SearchWindow(QWidget):
         self.search_timer.stop()
         if text:
             self.search_timer.start(500)
+
 
     def perform_search(self):
         keyword = self.search_input.text().strip()
@@ -236,6 +239,19 @@ class SearchWindow(QWidget):
     def handle_add_to_playlist(self,song_info):
         if hasattr(self,'add_to_playlist_signal'):
             self.add_to_playlist_signal.emit(song_info)
+
+    @asyncSlot()
+    async def perform_search(self):
+        keyword = self.search_input.text().strip()
+        if not keyword:
+            self.result_table.clearContents()
+            self.result_table.setRowCount(0)
+            return
+        try:
+            results = await self.music_service.search_all(keyword, type=1)
+            self.search_completed.emit(results)
+        except Exception as e:
+            print(f"SEARCH_WRONG:{e}")
 
     def update_results_list(self, results):
         self.result_table.clearContents()

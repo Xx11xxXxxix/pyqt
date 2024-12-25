@@ -1,33 +1,54 @@
+from typing import Dict
+
 import requests
 from urllib.parse import urljoin
 
+from services.http_client import AsyncHttpClient
+
+
 class MusicService:
+    def __init__(self):
+        self.http_client=AsyncHttpClient.instance()
+
     BASE_URL="http://121.36.9.139:3000"
 
 
-    def search_multimatch(self,keywords,cookies):
-        url=urljoin(self.BASE_URL,"search/multimatch")
-        params={
-            "keywords":keywords,
-            "cookie":cookies
-        }
+    async def search_multimatch(self,keywords,cookies)->Dict[str, any]:
+        print(211212)
+        return await self.http_client.get(
+            "/search/multimatch",
+            params={"keywords":keywords},
+            cookies=cookies
+        )
+        # url=urljoin(self.BASE_URL,"search/multimatch")
+        # params={
+        #     "keywords":keywords,
+        #     "cookie":cookies
+        # }
+        #
+        # response=requests.get(url,params=params)
+        # response.raise_for_status()
+        # print(response.text)
+        # return response.json()
 
-        response=requests.get(url,params=params)
-        response.raise_for_status()
-        print(response.text)
-        return response.json()
-
-    def search_all(self,keywords,limit=30,offset=0,type=1):
-        url=urljoin(self.BASE_URL,"cloudsearch")
-        params={
-            "keywords":keywords,
-            "limit":limit,
-            "offset":offset,
-            "type":type
-        }
-        response=requests.get(url,params=params)
-        response.raise_for_status()
-        return response.json()
+    async def search_all(self,keywords,limit=30,offset=0,type=1)->Dict[str, any]:
+        return await self.http_client.get(
+            "/search/all",
+            params={"keywords":keywords
+                    ,"limit":limit
+                    ,"offset":offset
+                    ,"type":type},
+        )
+        # url=urljoin(self.BASE_URL,"cloudsearch")
+        # params={
+        #     "keywords":keywords,
+        #     "limit":limit,
+        #     "offset":offset,
+        #     "type":type
+        # }
+        # response=requests.get(url,params=params)
+        # response.raise_for_status()
+        # return response.json()
 
     def get_recommend_resource(self, cookies):
         url = f"{self.BASE_URL}/recommend/resource"
