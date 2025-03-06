@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QMessageBox
 from PyQt6.QtCore import Qt, pyqtSignal
-from services.music_service import MusicService  # 确保 MusicService 能处理 /recommend/resource 请求
+from services.music_service import MusicService
 from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 
